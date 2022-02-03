@@ -1,12 +1,13 @@
 /**
  * @license
- * Copyright Google Inc. All Rights Reserved.
+ * Copyright Google LLC All Rights Reserved.
  *
  * Use of this source code is governed by an MIT-style license that can be
  * found in the LICENSE file at https://angular.io/license
  */
 
 import {ɵstringify as stringify} from '@angular/core';
+
 import {MetadataOverride} from './metadata_override';
 
 type StringMap = {
@@ -22,7 +23,7 @@ export class MetadataOverrider {
    * based on an old instance and overrides.
    */
   overrideMetadata<C extends T, T>(
-      metadataClass: {new (options: T): C;}, oldMetadata: C, override: MetadataOverride<T>): C {
+      metadataClass: {new(options: T): C;}, oldMetadata: C, override: MetadataOverride<T>): C {
     const props: StringMap = {};
     if (oldMetadata) {
       _valueProps(oldMetadata).forEach((prop) => props[prop] = (<any>oldMetadata)[prop]);
@@ -49,8 +50,9 @@ function removeMetadata(metadata: StringMap, remove: any, references: Map<any, s
   for (const prop in remove) {
     const removeValue = remove[prop];
     if (Array.isArray(removeValue)) {
-      removeValue.forEach(
-          (value: any) => { removeObjects.add(_propHashKey(prop, value, references)); });
+      removeValue.forEach((value: any) => {
+        removeObjects.add(_propHashKey(prop, value, references));
+      });
     } else {
       removeObjects.add(_propHashKey(prop, removeValue, references));
     }
@@ -88,8 +90,20 @@ function setMetadata(metadata: StringMap, set: any) {
 }
 
 function _propHashKey(propName: any, propValue: any, references: Map<any, string>): string {
+  let nextObjectId = 0;
+  const objectIds = new Map<object, string>();
   const replacer = (key: any, value: any) => {
-    if (typeof value === 'function') {
+    if (value !== null && typeof value === 'object') {
+      if (objectIds.has(value)) {
+        return objectIds.get(value);
+      }
+      // Record an id for this object such that any later references use the object's id instead
+      // of the object itself, in order to break cyclic pointers in objects.
+      objectIds.set(value, `ɵobj#${nextObjectId++}`);
+
+      // The first time an object is seen the object itself is serialized.
+      return value;
+    } else if (typeof value === 'function') {
       value = _serializeReference(value, references);
     }
     return value;

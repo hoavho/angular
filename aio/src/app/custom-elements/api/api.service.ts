@@ -30,7 +30,7 @@ export class ApiService implements OnDestroy {
   private apiBase = DOC_CONTENT_URL_PREFIX + 'api/';
   private apiListJsonDefault = 'api-list.json';
   private firstTime = true;
-  private onDestroy = new Subject();
+  private onDestroy = new Subject<void>();
   private sectionsSubject = new ReplaySubject<ApiSection[]>(1);
   private _sections = this.sectionsSubject.pipe(takeUntil(this.onDestroy));
 
@@ -67,7 +67,7 @@ export class ApiService implements OnDestroy {
   * API sections is an array of Angular top modules and metadata about their API documents (items).
   * Updates `sections` observable
   *
-  * @param {string} [src] - Name of the api list JSON file
+  * @param [src] - Name of the api list JSON file
   */
   fetchSections(src?: string) {
     // TODO: get URL by configuration?

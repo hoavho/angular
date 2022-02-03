@@ -1,39 +1,62 @@
 /**
  * @license
- * Copyright Google Inc. All Rights Reserved.
+ * Copyright Google LLC All Rights Reserved.
  *
  * Use of this source code is governed by an MIT-style license that can be
  * found in the LICENSE file at https://angular.io/license
  */
 
-import {Directive, Self} from '@angular/core';
+import {Directive, Optional, Self} from '@angular/core';
 
 import {AbstractControlDirective} from './abstract_control_directive';
 import {ControlContainer} from './control_container';
 import {NgControl} from './ng_control';
 
+type AnyControlStatus =
+    'untouched'|'touched'|'pristine'|'dirty'|'valid'|'invalid'|'pending'|'submitted';
+
 export class AbstractControlStatus {
-  private _cd: AbstractControlDirective;
+  private _cd: AbstractControlDirective|null;
 
-  constructor(cd: AbstractControlDirective) { this._cd = cd; }
+  constructor(cd: AbstractControlDirective|null) {
+    this._cd = cd;
+  }
 
-  get ngClassUntouched(): boolean { return this._cd.control ? this._cd.control.untouched : false; }
-  get ngClassTouched(): boolean { return this._cd.control ? this._cd.control.touched : false; }
-  get ngClassPristine(): boolean { return this._cd.control ? this._cd.control.pristine : false; }
-  get ngClassDirty(): boolean { return this._cd.control ? this._cd.control.dirty : false; }
-  get ngClassValid(): boolean { return this._cd.control ? this._cd.control.valid : false; }
-  get ngClassInvalid(): boolean { return this._cd.control ? this._cd.control.invalid : false; }
-  get ngClassPending(): boolean { return this._cd.control ? this._cd.control.pending : false; }
+  is(status: AnyControlStatus): boolean {
+    // Currently with ViewEngine (in AOT mode) it's not possible to use private methods in host
+    // bindings.
+    // TODO: once ViewEngine is removed, this function should be refactored:
+    //  - make the `is` method `protected`, so it's not accessible publicly
+    //  - move the `submitted` status logic to the `NgControlStatusGroup` class
+    //    and make it `private` or `protected` too.
+    if (status === 'submitted') {
+      // We check for the `submitted` field from `NgForm` and `FormGroupDirective` classes, but
+      // we avoid instanceof checks to prevent non-tree-shakable references to those types.
+      return !!(this._cd as unknown as {submitted: boolean} | null)?.submitted;
+    }
+    return !!this._cd?.control?.[status];
+  }
 }
 
 export const ngControlStatusHost = {
-  '[class.ng-untouched]': 'ngClassUntouched',
-  '[class.ng-touched]': 'ngClassTouched',
-  '[class.ng-pristine]': 'ngClassPristine',
-  '[class.ng-dirty]': 'ngClassDirty',
-  '[class.ng-valid]': 'ngClassValid',
-  '[class.ng-invalid]': 'ngClassInvalid',
-  '[class.ng-pending]': 'ngClassPending',
+  '[class.ng-untouched]': 'is("untouched")',
+  '[class.ng-touched]': 'is("touched")',
+  '[class.ng-pristine]': 'is("pristine")',
+  '[class.ng-dirty]': 'is("dirty")',
+  '[class.ng-valid]': 'is("valid")',
+  '[class.ng-invalid]': 'is("invalid")',
+  '[class.ng-pending]': 'is("pending")',
+};
+
+export const ngGroupStatusHost = {
+  '[class.ng-untouched]': 'is("untouched")',
+  '[class.ng-touched]': 'is("touched")',
+  '[class.ng-pristine]': 'is("pristine")',
+  '[class.ng-dirty]': 'is("dirty")',
+  '[class.ng-valid]': 'is("valid")',
+  '[class.ng-invalid]': 'is("invalid")',
+  '[class.ng-pending]': 'is("pending")',
+  '[class.ng-submitted]': 'is("submitted")',
 };
 
 /**
@@ -61,14 +84,17 @@ export const ngControlStatusHost = {
  */
 @Directive({selector: '[formControlName],[ngModel],[formControl]', host: ngControlStatusHost})
 export class NgControlStatus extends AbstractControlStatus {
-  constructor(@Self() cd: NgControl) { super(cd); }
+  constructor(@Self() cd: NgControl) {
+    super(cd);
+  }
 }
 
 /**
  * @description
  * Directive automatically applied to Angular form groups that sets CSS classes
- * based on control status (valid/invalid/dirty/etc).
- * 
+ * based on control status (valid/invalid/dirty/etc). On groups, this includes the additional
+ * class ng-submitted.
+ *
  * @see `NgControlStatus`
  *
  * @ngModule ReactiveFormsModule
@@ -78,8 +104,10 @@ export class NgControlStatus extends AbstractControlStatus {
 @Directive({
   selector:
       '[formGroupName],[formArrayName],[ngModelGroup],[formGroup],form:not([ngNoForm]),[ngForm]',
-  host: ngControlStatusHost
+  host: ngGroupStatusHost
 })
 export class NgControlStatusGroup extends AbstractControlStatus {
-  constructor(@Self() cd: ControlContainer) { super(cd); }
+  constructor(@Optional() @Self() cd: ControlContainer) {
+    super(cd);
+  }
 }

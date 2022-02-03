@@ -1,34 +1,17 @@
 {
-  "name": "cli-hello-world-ivy-compat",
+  "name": "cli-hello-world-ivy-i18n",
   "version": "0.0.0",
   "license": "MIT",
   "scripts": {
-    "build": "ng build --prod --progress=false",
-    "e2e": "ng e2e --webdriver-update=false",
+    "build": "ng build --prod",
+    "e2e": "ng e2e --port 0",
     "lint": "ng lint",
     "ng": "ng",
-    "postinstall": "webdriver-manager update --gecko=false --standalone=false $CI_CHROMEDRIVER_VERSION_ARG",
     "start": "ng serve",
     "pretest": "ng version",
-    "test": "ng test --progress=false --watch=false && yarn e2e --configuration=ci && yarn e2e --configuration=ci-production && yarn translated:test && yarn translated:legacy:test",
-    "translate": "localize-translate -r \"dist/\" -s \"**/*\" -l \"en-US\" -t \"src/locales/messages.*\" -o \"tmp/translations/{{LOCALE}}\"",
-    
-    "translated:test": "yarn build && yarn translate && yarn translated:fr:e2e && yarn translated:de:e2e && yarn translated:en:e2e",
-    
-    "translated:fr:serve": "serve tmp/translations/fr --listen 4200",
-    "translated:fr:e2e": "npm-run-all -p -r translated:fr:serve \"ng e2e --configuration=translated-fr --webdriver-update=false\"",
-    
-    "translated:de:serve": "serve tmp/translations/de --listen 4200",
-    "translated:de:e2e": "npm-run-all -p -r translated:de:serve \"ng e2e --configuration=translated-de --webdriver-update=false\"",
-    
-    "translated:en:serve": "serve tmp/translations/en-US --listen 4200",
-    "translated:en:e2e": "npm-run-all -p -r translated:en:serve \"ng e2e --configuration=translated-en --webdriver-update=false\"",
-    
-    "translated:legacy:test": "yarn translated:legacy:extract-and-update && ng build --configuration=translated-legacy && yarn translated:legacy:translate && yarn translated:legacy:e2e",
-    "translated:legacy:extract-and-update": "ng xi18n && sed -i.bak -e 's/source>/target>'/ -e 's/Hello/Bonjour/' -e 's/source-language=\"en-US\"/source-language=\"en-US\" target-language=\"legacy\"/' tmp/legacy-locales/messages.legacy.xlf",
-    "translated:legacy:translate": "localize-translate -r \"dist/\" -s \"**/*\" -t \"tmp/legacy-locales/messages.legacy.xlf\" -o \"tmp/translations/{{LOCALE}}\"",
-    "translated:legacy:serve": "serve tmp/translations/legacy --listen 4200",
-    "translated:legacy:e2e": "npm-run-all -p -r translated:legacy:serve \"ng e2e --configuration=translated-legacy --webdriver-update=false\""
+    "test": "ng e2e --port 0 --prod && ng xi18n && yarn translate && ng e2e --port 0 --configuration fr && ng e2e --port 0 --configuration de",
+    "translate": "cp src/locale/messages.xlf src/locale/messages.fr.xlf && cp src/locale/messages.xlf src/locale/messages.de.xlf && sed -i.bak -e 's/source>/target>/g' -e 's/Hello/Bonjour/' src/locale/messages.fr.xlf && sed -i.bak -e 's/source>/target>/g' -e 's/Hello/Hallo/' src/locale/messages.de.xlf",
+    "serve": "serve --no-clipboard --listen 4200"
   },
   "private": true,
   "dependencies": {
@@ -42,31 +25,31 @@
     "@angular/platform-browser-dynamic": "file:../../dist/packages-dist/platform-browser-dynamic",
     "@angular/router": "file:../../dist/packages-dist/router",
     "core-js": "file:../../node_modules/core-js",
-    "npm-run-all": "^4.1.5",
     "rxjs": "file:../../node_modules/rxjs",
-    "serve": "^11.2.0",
-    "tslib": "^1.9.3",
-    "zone.js": "file:../../node_modules/zone.js"
+    "tslib": "file:../../node_modules/tslib",
+    "zone.js": "file:../../dist/zone.js-dist/archive/zone.js.tgz"
   },
   "devDependencies": {
-    "@angular-devkit/build-angular": "^0.900.0-next.9",
-    "@angular/cli": "9.0.0-next.9",
+    "@angular-devkit/build-angular": "file:../../node_modules/@angular-devkit/build-angular",
+    "@angular/cli": "file:../../node_modules/@angular/cli",
     "@angular/compiler-cli": "file:../../dist/packages-dist/compiler-cli",
     "@angular/language-service": "file:../../dist/packages-dist/language-service",
-    "@types/jasmine": "~2.8.8",
-    "@types/jasminewd2": "~2.0.3",
-    "@types/node": "~8.9.4",
-    "codelyzer": "~4.5.0",
-    "jasmine-core": "~2.99.1",
-    "jasmine-spec-reporter": "~4.2.1",
-    "karma": "~3.1.1",
-    "karma-chrome-launcher": "~2.2.0",
-    "karma-coverage-istanbul-reporter": "~2.0.1",
-    "karma-jasmine": "~1.1.2",
-    "karma-jasmine-html-reporter": "^0.2.2",
+    "@types/jasmine": "file:../../node_modules/@types/jasmine",
+    "@types/jasminewd2": "file:../../node_modules/@types/jasminewd2",
+    "@types/node": "file:../../node_modules/@types/node",
+    "codelyzer": "5.2.0",
+    "jasmine-core": "3.5.0",
+    "jasmine-spec-reporter": "4.2.1",
+    "karma": "4.4.0",
+    "karma-chrome-launcher": "3.1.0",
+    "karma-coverage-istanbul-reporter": "2.1.0",
+    "karma-jasmine": "2.0.1",
+    "karma-jasmine-html-reporter": "1.4.2",
+    "npm-run-all": "4.1.5",
     "protractor": "file:../../node_modules/protractor",
-    "ts-node": "~7.0.0",
-    "tslint": "~5.18.0",
+    "serve": "11.2.0",
+    "ts-node": "8.3.0",
+    "tslint": "5.18.0",
     "typescript": "file:../../node_modules/typescript"
   }
 }

@@ -9,12 +9,13 @@ import { Hero } from '../model/hero';
   template: `
     <div (click)="click()" class="hero">
       {{hero.name | uppercase}}
-    </div>`,
+    </div>
+  `,
   styleUrls: [ './dashboard-hero.component.css' ]
 })
 // #docregion class
 export class DashboardHeroComponent {
-  @Input() hero: Hero;
+  @Input() hero!: Hero;
   @Output() selected = new EventEmitter<Hero>();
   click() { this.selected.emit(this.hero); }
 }

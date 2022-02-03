@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright Google Inc. All Rights Reserved.
+ * Copyright Google LLC All Rights Reserved.
  *
  * Use of this source code is governed by an MIT-style license that can be
  * found in the LICENSE file at https://angular.io/license
@@ -16,7 +16,6 @@
  * Forms providers are not included in default providers; you must import these providers
  * explicitly.
  */
-
 
 export {ɵInternalFormsSharedModule} from './directives';
 export {AbstractControlDirective} from './directives/abstract_control_directive';
@@ -38,15 +37,29 @@ export {RangeValueAccessor} from './directives/range_value_accessor';
 export {FormControlDirective} from './directives/reactive_directives/form_control_directive';
 export {FormControlName} from './directives/reactive_directives/form_control_name';
 export {FormGroupDirective} from './directives/reactive_directives/form_group_directive';
-export {FormArrayName} from './directives/reactive_directives/form_group_name';
-export {FormGroupName} from './directives/reactive_directives/form_group_name';
+export {FormArrayName, FormGroupName} from './directives/reactive_directives/form_group_name';
 export {NgSelectOption, SelectControlValueAccessor} from './directives/select_control_value_accessor';
-export {SelectMultipleControlValueAccessor} from './directives/select_multiple_control_value_accessor';
-export {ɵNgSelectMultipleOption} from './directives/select_multiple_control_value_accessor';
-export {AsyncValidator, AsyncValidatorFn, CheckboxRequiredValidator, EmailValidator, MaxLengthValidator, MinLengthValidator, PatternValidator, RequiredValidator, ValidationErrors, Validator, ValidatorFn} from './directives/validators';
+export {SelectMultipleControlValueAccessor, ɵNgSelectMultipleOption} from './directives/select_multiple_control_value_accessor';
+export {AsyncValidator, AsyncValidatorFn, CheckboxRequiredValidator, EmailValidator, MaxLengthValidator, MaxValidator, MinLengthValidator, MinValidator, PatternValidator, RequiredValidator, ValidationErrors, Validator, ValidatorFn} from './directives/validators';
 export {FormBuilder} from './form_builder';
-export {AbstractControl, AbstractControlOptions, FormArray, FormControl, FormGroup} from './model';
+export {AbstractControl, AbstractControlOptions, FormArray, FormControl, FormControlOptions, FormControlStatus, FormGroup, ɵFormControlCtor} from './model';
 export {NG_ASYNC_VALIDATORS, NG_VALIDATORS, Validators} from './validators';
 export {VERSION} from './version';
+
+/**
+ * `AnyForUntypedForms` is an alias for `any` used as part of the typed forms
+ * migration.
+ *
+ * `AnyForUntypedForms` was inserted into your code automatically as part of a migration. To
+ * continue opting out of strong types, simply replace it with `any`. To opt-in to typed forms,
+ * remove
+ * `<AnyForUntypedForms>` from your call site.
+ *
+ * This symbol is currently unused. Please do not use it. These docs will be updated when this
+ * symbol is in use.
+ *
+ * @publicApi
+ */
+export type AnyForUntypedForms = any;
 
 export * from './form_providers';

@@ -60,7 +60,7 @@ The above will create following layout:
 | Index | `LView`         | `TView.data`
 | ----: | -----------         | ------------
 | `HEADER`
-| `CONSTS`
+| `DECLS`
 | 10    | `<div>`             | `{type: Element, index: 10, parent: null}`
 | 11    | `#text(Hello )`     | `{type: Element, index: 11, parent: tView.data[10]}`
 | 12    | `<b>`               | `{type: Element, index: 12, parent: tView.data[10]}`
@@ -113,7 +113,7 @@ The above will create following layout:
 | Index | `LView`         | `TView.data`
 | ----: | -----------         | ------------
 | `HEADER`
-| `CONSTS`
+| `DECLS`
 | 10    | `<div>`             | `{type: Element, index: 10, parent: null}`
 | 11    | `#text()`           | `{type: Element, index: 11, parent: tView.data[10]}`
 | `VARS`
@@ -186,7 +186,7 @@ The above will create the following layout:
 | Index | `LView`         | `TView.data`
 | ----: | -----------         | ------------
 | `HEADER`
-| `CONSTS`
+| `DECLS`
 | 10    | `[<child>, ...]`    | `{type: Element, index: 10, parent: null}`
 | `VARS`
 | `EXPANDO`
@@ -197,57 +197,6 @@ The above will create the following layout:
 | 22    | `'greeting'`        | `'title'`
 | ...   | ...                 | ...
 
-
-The `EXPANDO` section needs additional information for information stored in `TView.expandoInstructions`
-
-| Index | `TView.expandoInstructions`         | Meaning
-| ----: | ---------------------------:        | -------
-| 0     | -10                                 | Negative numbers signify pointers to elements. In this case 10 (`<child>`)
-| 1     | 2                                   | Injector size. Number of values to skip to get to Host Bindings.
-| 2     | Child.ɵcmp.hostBindings   | The function to call. (Only when `hostVars` is not `0`)
-| 3     | Child.ɵcmp.hostVars       | Number of host bindings to process. (Only when `hostVars` is not `0`)
-| 4     | Tooltip.ɵdir.hostBindings | The function to call. (Only when `hostVars` is not `0`)
-| 5     | Tooltip.ɵdir.hostVars     | Number of host bindings to process. (Only when `hostVars` is not `0`)
-
-The reason for this layout is to make the host binding update efficient using this pseudo code:
-```typescript
-let currentDirectiveIndex = -1;
-let currentElementIndex = -1;
-// This is global state which is used internally by hostBindings to know where the offset is
-let bindingRootIndex = tView.expandoStartIndex;
-for(var i = 0; i < tView.expandoInstructions.length; i++) {
-  let instruction = tView.expandoInstructions[i];
-  if (typeof instruction === 'number') {
-    // Numbers are used to update the indices.
-    if (instruction < 0) {
-      // Negative numbers means that we are starting new EXPANDO block and need to update current element and directive index
-      bindingRootIndex += BLOOM_OFFSET;
-      currentDirectiveIndex = bindingRootIndex;
-      currentElementIndex = -instruction;
-    } else {
-      bindingRootIndex += instruction;
-    }
-  } else {
-    // We know that we are hostBinding function so execute it.
-    instruction(currentDirectiveIndex, currentElementIndex);
-    currentDirectiveIndex++;
-  }
-}
-```
-
-The above code should execute as:
-
-| Instruction                           | `bindingRootIndex` | `currentDirectiveIndex`   | `currentElementIndex`
-| ----------:                           | -----------------: | ----------------------:   | --------------------:
-| (initial)                             | `11`               | `-1`                      | `-1`
-| `-10`                                 | `19`               | `\* new Child() *\ 19`    | `\* <child> *\ 10`
-| `2`                                   | `21`               | `\* new Child() *\ 19`    | `\* <child> *\ 10`
-| `Child.ɵcmp.hostBindings`   | invoke with =>     | `\* new Child() *\ 19`    | `\* <child> *\ 10`
-|                                       | `21`               | `\* new Tooltip() *\ 20`  | `\* <child> *\ 10`
-| `Child.ɵcmp.hostVars`       | `22`               | `\* new Tooltip() *\ 20`  | `\* <child> *\ 10`
-| `Tooltip.ɵdir.hostBindings` | invoke with =>     | `\* new Tooltip() *\ 20`  | `\* <child> *\ 10`
-|                                       | `22`               | `21`                      | `\* <child> *\ 10`
-| `Tooltip.ɵdir.hostVars`     | `22`               | `21`                      | `\* <child> *\ 10`
 
 ## `EXPANDO` and Injection
 
@@ -325,15 +274,15 @@ The above will create the following layout:
 | Index | `LView`                                  | `TView.data`
 | ----: | ------------                                 | -------------
 | `HEADER`
-| `CONSTS`
+| `DECLS`
 | 10    | `[<child>, ...]`                             | `{type: Element, index: 10, parent: null, expandoIndex: 11, directivesIndex: 19, providersIndex: 20, viewProvidersIndex: 22, expandoEnd: 23}`
 | `VARS`
 | `EXPANDO`
 | 11..18| cumulativeBloom                              | templateBloom
 |       | *sub-section: `component` and `directives`*
-| 19    | `factory(Child.ɵcmp.factory)`*     | `Child`
+| 19    | `factory(Child.ɵcmp.factory)`*               | `Child`
 |       | *sub-section: `providers`*
-| 20    | `factory(ServiceA.ngInjectableDef.factory)`* | `ServiceA`
+| 20    | `factory(ServiceA.ɵprov.factory)`*           | `ServiceA`
 | 22    | `'someServiceBValue'`*                       | `ServiceB`
 |       | *sub-section: `viewProviders`*
 | 22    | `factory(()=> new Service())`*               | `ServiceC`
@@ -420,7 +369,7 @@ A pseudo-implementation of `inject` function.
 ```typescript
 function inject(token: any): any {
   let injectableDef;
-  if (typeof token === 'function' && injectableDef = token.ngInjectableDef) {
+  if (typeof token === 'function' && injectableDef = token.ɵprov) {
     const provideIn = injectableDef.provideIn;
    if (provideIn === '__node_injector__') {
       // if we are injecting `Injector` than create a wrapper object around the inject but which

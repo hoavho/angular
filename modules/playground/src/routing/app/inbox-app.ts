@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright Google Inc. All Rights Reserved.
+ * Copyright Google LLC All Rights Reserved.
  *
  * Use of this source code is governed by an MIT-style license that can be
  * found in the LICENSE file at https://angular.io/license
@@ -29,7 +29,8 @@ export class InboxRecord {
     email: string,
     firstName: string,
     lastName: string,
-    date: string, draft?: boolean
+    date: string,
+    draft?: boolean
   } = null) {
     if (data) {
       this.setData(data);
@@ -43,7 +44,8 @@ export class InboxRecord {
     email: string,
     firstName: string,
     lastName: string,
-    date: string, draft?: boolean
+    date: string,
+    draft?: boolean
   }) {
     this.id = record.id;
     this.subject = record.subject;
@@ -122,7 +124,8 @@ export class DraftsCmp {
 
 export const ROUTER_CONFIG = [
   {path: '', pathMatch: 'full', redirectTo: 'inbox'}, {path: 'inbox', component: InboxCmp},
-  {path: 'drafts', component: DraftsCmp}, {path: 'detail', loadChildren: 'app/inbox-detail.js'}
+  {path: 'drafts', component: DraftsCmp},
+  {path: 'detail', loadChildren: () => import('./inbox-detail.js').then(mod => mod.default)}
 ];
 
 @Component({selector: 'inbox-app', templateUrl: './inbox-app.html'})

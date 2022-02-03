@@ -1,23 +1,24 @@
 /**
  * @license
- * Copyright Google Inc. All Rights Reserved.
+ * Copyright Google LLC All Rights Reserved.
  *
  * Use of this source code is governed by an MIT-style license that can be
  * found in the LICENSE file at https://angular.io/license
  */
+
 import {ɵɵdefineDirective, ɵɵelementEnd, ɵɵelementStart, ɵɵtext} from '../../../../src/render3/index';
-import {createTNode, createTView} from '../../../../src/render3/instructions/shared';
+import {createLView, createTNode, createTView} from '../../../../src/render3/instructions/shared';
 import {RenderFlags} from '../../../../src/render3/interfaces/definition';
-import {TNodeType, TViewNode} from '../../../../src/render3/interfaces/node';
-import {resetComponentState} from '../../../../src/render3/state';
+import {TNodeType} from '../../../../src/render3/interfaces/node';
+import {LViewFlags, TViewType} from '../../../../src/render3/interfaces/view';
 import {createBenchmark} from '../micro_bench';
 import {createAndRenderLView} from '../setup';
 
 class Tooltip {
   tooltip?: string;
   position?: string;
-  static ngFactoryDef = () => new Tooltip();
-  static ngDirectiveDef = ɵɵdefineDirective({
+  static ɵfac = () => new Tooltip();
+  static ɵdir = ɵɵdefineDirective({
     type: Tooltip,
     selectors: [['', 'tooltip', '']],
     inputs: {tooltip: 'tooltip', position: 'position'}
@@ -73,16 +74,17 @@ function testTemplate(rf: RenderFlags, ctx: any) {
   }
 }
 
-const viewTNode = createTNode(null !, null, TNodeType.View, -1, null, null) as TViewNode;
+const rootLView = createLView(
+    null, createTView(TViewType.Root, null, null, 0, 0, null, null, null, null, null), {},
+    LViewFlags.IsRoot, null, null, null, null, null, null);
+
+const viewTNode = createTNode(null!, null, TNodeType.Element, -1, null, null);
 const embeddedTView = createTView(
-    -1, testTemplate, 21, 10, [Tooltip.ngDirectiveDef], null, null, null,
+    TViewType.Embedded, null, testTemplate, 21, 10, [Tooltip.ɵdir], null, null, null,
     [['position', 'top', 3, 'tooltip']]);
 
-// initialize global state
-resetComponentState();
-
-// create view once so we don't profile first template pass
-createAndRenderLView(null, embeddedTView, viewTNode);
+// create view once so we don't profile the first create pass
+createAndRenderLView(rootLView, embeddedTView, viewTNode);
 
 // scenario to benchmark
 const directiveInstantiate = createBenchmark('directive instantiate');
@@ -90,9 +92,7 @@ const createTime = directiveInstantiate('create');
 
 console.profile('directive_instantiate');
 while (createTime()) {
-  for (let i = 0; i < 50000; i++) {
-    createAndRenderLView(null, embeddedTView, viewTNode);
-  }
+  createAndRenderLView(rootLView, embeddedTView, viewTNode);
 }
 console.profileEnd();
 

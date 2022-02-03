@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright Google Inc. All Rights Reserved.
+ * Copyright Google LLC All Rights Reserved.
  *
  * Use of this source code is governed by an MIT-style license that can be
  * found in the LICENSE file at https://angular.io/license
@@ -8,20 +8,25 @@
 import {AnimationPlayer, NoopAnimationPlayer} from '@angular/animations';
 import {Injectable} from '@angular/core';
 
-import {containsElement, invokeQuery, matchesElement, validateStyleProperty} from './shared';
+import {containsElement, invokeQuery, validateStyleProperty} from './shared';
 
 /**
  * @publicApi
  */
 @Injectable()
 export class NoopAnimationDriver implements AnimationDriver {
-  validateStyleProperty(prop: string): boolean { return validateStyleProperty(prop); }
-
-  matchesElement(element: any, selector: string): boolean {
-    return matchesElement(element, selector);
+  validateStyleProperty(prop: string): boolean {
+    return validateStyleProperty(prop);
   }
 
-  containsElement(elm1: any, elm2: any): boolean { return containsElement(elm1, elm2); }
+  matchesElement(_element: any, _selector: string): boolean {
+    // This method is deprecated and no longer in use so we return false.
+    return false;
+  }
+
+  containsElement(elm1: any, elm2: any): boolean {
+    return containsElement(elm1, elm2);
+  }
 
   query(element: any, selector: string, multi: boolean): any[] {
     return invokeQuery(element, selector, multi);
@@ -32,7 +37,7 @@ export class NoopAnimationDriver implements AnimationDriver {
   }
 
   animate(
-      element: any, keyframes: {[key: string]: string | number}[], duration: number, delay: number,
+      element: any, keyframes: Array<Map<string, string|number>>, duration: number, delay: number,
       easing: string, previousPlayers: any[] = [],
       scrubberAccessRequested?: boolean): AnimationPlayer {
     return new NoopAnimationPlayer(duration, delay);
@@ -43,10 +48,13 @@ export class NoopAnimationDriver implements AnimationDriver {
  * @publicApi
  */
 export abstract class AnimationDriver {
-  static NOOP: AnimationDriver = new NoopAnimationDriver();
+  static NOOP: AnimationDriver = (/* @__PURE__ */ new NoopAnimationDriver());
 
   abstract validateStyleProperty(prop: string): boolean;
 
+  /**
+   * @deprecated No longer in use. Will be removed.
+   */
   abstract matchesElement(element: any, selector: string): boolean;
 
   abstract containsElement(elm1: any, elm2: any): boolean;
@@ -56,6 +64,6 @@ export abstract class AnimationDriver {
   abstract computeStyle(element: any, prop: string, defaultValue?: string): string;
 
   abstract animate(
-      element: any, keyframes: {[key: string]: string | number}[], duration: number, delay: number,
+      element: any, keyframes: Array<Map<string, string|number>>, duration: number, delay: number,
       easing?: string|null, previousPlayers?: any[], scrubberAccessRequested?: boolean): any;
 }

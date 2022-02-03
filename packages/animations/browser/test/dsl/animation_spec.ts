@@ -1,11 +1,11 @@
 /**
  * @license
- * Copyright Google Inc. All Rights Reserved.
+ * Copyright Google LLC All Rights Reserved.
  *
  * Use of this source code is governed by an MIT-style license that can be
  * found in the LICENSE file at https://angular.io/license
  */
-import {AUTO_STYLE, AnimationMetadata, AnimationMetadataType, AnimationOptions, animate, animation, group, keyframes, query, sequence, state, style, transition, trigger, useAnimation, ɵStyleData} from '@angular/animations';
+import {animate, animation, AnimationMetadata, AnimationMetadataType, AnimationOptions, AUTO_STYLE, group, keyframes, query, sequence, state, style, transition, trigger, useAnimation, ɵStyleDataMap} from '@angular/animations';
 
 import {Animation} from '../../src/dsl/animation';
 import {buildAnimationAst} from '../../src/dsl/animation_ast_builder';
@@ -19,7 +19,7 @@ function createDiv() {
 
 {
   describe('Animation', () => {
-    // these tests are only mean't to be run within the DOM (for now)
+    // these tests are only meant to be run within the DOM (for now)
     if (isNode) return;
 
     let rootElement: any;
@@ -35,7 +35,9 @@ function createDiv() {
       rootElement.appendChild(subElement2);
     });
 
-    afterEach(() => { document.body.removeChild(rootElement); });
+    afterEach(() => {
+      document.body.removeChild(rootElement);
+    });
 
     describe('validation', () => {
       it('should throw an error if one or more but not all keyframes() styles contain offsets',
@@ -45,7 +47,9 @@ function createDiv() {
                                    style({opacity: 1, offset: 1}),
                                  ]));
 
-           expect(() => { validateAndThrowAnimationSequence(steps); })
+           expect(() => {
+             validateAndThrowAnimationSequence(steps);
+           })
                .toThrowError(
                    /Not all style\(\) steps within the declared keyframes\(\) contain offsets/);
          });
@@ -96,7 +100,9 @@ function createDiv() {
                   ]))
         ]);
 
-        expect(() => { validateAndThrowAnimationSequence(steps); })
+        expect(() => {
+          validateAndThrowAnimationSequence(steps);
+        })
             .toThrowError(
                 /The CSS property "opacity" that exists between the times of "0ms" and "2000ms" is also being animated in a parallel animation between the times of "0ms" and "1500ms"/);
       });
@@ -191,7 +197,9 @@ function createDiv() {
                    })),
            ];
 
-           expect(() => { validateAndThrowAnimationSequence(steps); })
+           expect(() => {
+             validateAndThrowAnimationSequence(steps);
+           })
                .toThrowError(
                    /state\("final", ...\) must define default values for all the following style substitutions: one, two, three/);
 
@@ -203,7 +211,9 @@ function createDiv() {
                }),
                {params: {redColor: 'maroon'}})];
 
-           expect(() => { validateAndThrowAnimationSequence(steps2); })
+           expect(() => {
+             validateAndThrowAnimationSequence(steps2);
+           })
                .toThrowError(
                    /state\("panfinal", ...\) must define default values for all the following style substitutions: greyColor/);
          });
@@ -211,7 +221,9 @@ function createDiv() {
       it('should throw an error if an invalid CSS property is used in the animation', () => {
         const steps = [animate(1000, style({abc: '500px'}))];
 
-        expect(() => { validateAndThrowAnimationSequence(steps); })
+        expect(() => {
+          validateAndThrowAnimationSequence(steps);
+        })
             .toThrowError(
                 /The provided animation property "abc" is not a supported CSS property for animations/);
       });
@@ -249,11 +261,12 @@ function createDiv() {
 
              const players = invokeAnimationSequence(rootElement, steps);
              expect(players[0].keyframes).toEqual([
-               {height: AUTO_STYLE, width: 0, offset: 0},
-               {height: 50, width: 0, offset: .25},
-               {height: 50, width: 100, offset: .5},
-               {height: 150, width: 100, offset: .75},
-               {height: 150, width: 200, offset: 1},
+               new Map<string, string|number>(
+                   [['height', AUTO_STYLE], ['width', 0], ['offset', 0]]),
+               new Map<string, string|number>([['height', 50], ['width', 0], ['offset', .25]]),
+               new Map<string, string|number>([['height', 50], ['width', 100], ['offset', .5]]),
+               new Map<string, string|number>([['height', 150], ['width', 100], ['offset', .75]]),
+               new Map<string, string|number>([['height', 150], ['width', 200], ['offset', 1]]),
              ]);
            });
 
@@ -263,7 +276,8 @@ function createDiv() {
 
              const players = invokeAnimationSequence(rootElement, steps);
              expect(players[0].keyframes).toEqual([
-               {width: AUTO_STYLE, offset: 0}, {width: 999, offset: 1}
+               new Map<string, string|number>([['width', AUTO_STYLE], ['offset', 0]]),
+               new Map<string, string|number>([['width', 999], ['offset', 1]]),
              ]);
            });
 
@@ -275,8 +289,10 @@ function createDiv() {
 
           const players = invokeAnimationSequence(rootElement, steps);
           expect(players[0].keyframes).toEqual([
-            {width: 200, height: 0, opacity: 0, offset: 0},
-            {width: 100, height: 400, opacity: 1, offset: 1}
+            new Map<string, string|number>(
+                [['width', 200], ['height', 0], ['opacity', 0], ['offset', 0]]),
+            new Map<string, string|number>(
+                [['width', 100], ['height', 400], ['opacity', 1], ['offset', 1]])
           ]);
         });
 
@@ -291,10 +307,10 @@ function createDiv() {
              const keyframes = humanizeOffsets(players[0].keyframes, 4);
 
              expect(keyframes).toEqual([
-               {opacity: 0, offset: 0},
-               {opacity: .5, offset: .4998},
-               {opacity: .6, offset: .5002},
-               {opacity: 1, offset: 1},
+               new Map<string, string|number>([['opacity', 0], ['offset', 0]]),
+               new Map<string, string|number>([['opacity', .5], ['offset', .4998]]),
+               new Map<string, string|number>([['opacity', .6], ['offset', .5002]]),
+               new Map<string, string|number>([['opacity', 1], ['offset', 1]]),
              ]);
            });
 
@@ -306,7 +322,7 @@ function createDiv() {
 
           const player = invokeAnimationSequence(rootElement, steps)[0];
           const firstKeyframe = player.keyframes[0];
-          const firstKeyframeEasing = firstKeyframe['easing'] as string;
+          const firstKeyframeEasing = firstKeyframe.get('easing') as string;
           expect(firstKeyframeEasing.replace(/\s+/g, '')).toEqual('cubic-bezier(.29,.55,.53,1.53)');
         });
       });
@@ -334,8 +350,13 @@ function createDiv() {
 
              const player = players[0];
              expect(player.keyframes).toEqual([
-               {width: 0, offset: 0}, {width: 100, offset: .2}, {width: 200, offset: .4},
-               {width: 300, offset: .6}, {width: 400, offset: .8}, {width: 500, offset: 1}
+
+               new Map<string, string|number>([['width', 0], ['offset', 0]]),
+               new Map<string, string|number>([['width', 100], ['offset', .2]]),
+               new Map<string, string|number>([['width', 200], ['offset', .4]]),
+               new Map<string, string|number>([['width', 300], ['offset', .6]]),
+               new Map<string, string|number>([['width', 400], ['offset', .8]]),
+               new Map<string, string|number>([['width', 500], ['offset', 1]])
              ]);
            });
 
@@ -357,7 +378,8 @@ function createDiv() {
 
              const finalPlayer = players[players.length - 1];
              expect(finalPlayer.keyframes).toEqual([
-               {width: 200, height: 200, offset: 0}, {width: 500, height: 500, offset: 1}
+               new Map<string, string|number>([['width', 200], ['height', 200], ['offset', 0]]),
+               new Map<string, string|number>([['width', 500], ['height', 500], ['offset', 1]])
              ]);
            });
 
@@ -374,8 +396,8 @@ function createDiv() {
           const players = invokeAnimationSequence(rootElement, steps);
           const finalPlayer = players[players.length - 1];
           expect(finalPlayer.keyframes).toEqual([
-            {width: '100px', offset: 0},
-            {width: '200px', offset: 1},
+            new Map<string, string|number>([['width', '100px'], ['offset', 0]]),
+            new Map<string, string|number>([['width', '200px'], ['offset', 1]]),
           ]);
           expect(finalPlayer.delay).toEqual(1500);
         });
@@ -388,12 +410,12 @@ function createDiv() {
           let players = invokeAnimationSequence(rootElement, steps);
           expect(players.length).toEqual(1);
 
-          let p1 = players.pop() !;
+          let p1 = players.pop()!;
           expect(p1.duration).toEqual(1500);
           expect(p1.keyframes).toEqual([
-            {width: '*', offset: 0},
-            {width: '*', offset: 0.5},
-            {width: '300px', offset: 1},
+            new Map<string, string|number>([['width', '*'], ['offset', 0]]),
+            new Map<string, string|number>([['width', '*'], ['offset', 0.5]]),
+            new Map<string, string|number>([['width', '300px'], ['offset', 1]]),
           ]);
 
 
@@ -405,12 +427,12 @@ function createDiv() {
           players = invokeAnimationSequence(rootElement, steps);
           expect(players.length).toEqual(1);
 
-          p1 = players.pop() !;
+          p1 = players.pop()!;
           expect(p1.duration).toEqual(1000);
           expect(p1.keyframes).toEqual([
-            {width: '100px', offset: 0},
-            {width: '100px', offset: 0.5},
-            {width: '200px', offset: 1},
+            new Map<string, string|number>([['width', '100px'], ['offset', 0]]),
+            new Map<string, string|number>([['width', '100px'], ['offset', 0.5]]),
+            new Map<string, string|number>([['width', '200px'], ['offset', 1]]),
           ]);
         });
       });
@@ -432,8 +454,8 @@ function createDiv() {
              const player = players[0];
 
              expect(player.keyframes).toEqual([
-               {left: '0px', offset: 0},
-               {left: '100px', offset: 1},
+               new Map<string, string|number>([['left', '0px'], ['offset', 0]]),
+               new Map<string, string|number>([['left', '100px'], ['offset', 1]]),
              ]);
            });
 
@@ -465,7 +487,8 @@ function createDiv() {
           const players =
               invokeAnimationSequence(rootElement, steps, buildParams({one: '200', two: '400px'}));
           expect(players[0].keyframes).toEqual([
-            {offset: 0, borderRadius: '100px 100px'}, {offset: 1, borderRadius: '200px 400px'}
+            new Map<string, string|number>([['offset', 0], ['borderRadius', '100px 100px']]),
+            new Map<string, string|number>([['offset', 1], ['borderRadius', '200px 400px']])
           ]);
         });
 
@@ -490,7 +513,8 @@ function createDiv() {
              expect(players.length).toEqual(1);
              const [player] = players;
              expect(player.keyframes).toEqual([
-               {offset: 0, height: '1px'}, {offset: 1, height: '123px'}
+               new Map<string, string|number>([['offset', 0], ['height', '1px']]),
+               new Map<string, string|number>([['offset', 1], ['height', '123px']])
              ]);
            });
 
@@ -515,7 +539,8 @@ function createDiv() {
              expect(players.length).toEqual(1);
              const [player] = players;
              expect(player.keyframes).toEqual([
-               {offset: 0, height: '100px'}, {offset: 1, height: '200px'}
+               new Map<string, string|number>([['offset', 0], ['height', '100px']]),
+               new Map<string, string|number>([['offset', 1], ['height', '200px']]),
              ]);
            });
 
@@ -551,23 +576,24 @@ function createDiv() {
           const player0 = players[0];
           expect(player0.delay).toEqual(0);
           expect(player0.keyframes).toEqual([
-            {opacity: AUTO_STYLE, offset: 0},
-            {opacity: .5, offset: .5},
-            {opacity: 1, offset: 1},
+            new Map<string, string|number>([['opacity', AUTO_STYLE], ['offset', 0]]),
+            new Map<string, string|number>([['opacity', .5], ['offset', .5]]),
+            new Map<string, string|number>([['opacity', 1], ['offset', 1]]),
           ]);
 
           const subPlayer = players[1];
           expect(subPlayer.delay).toEqual(2000);
           expect(subPlayer.keyframes).toEqual([
-            {height: 0, offset: 0},
-            {height: 100, offset: .5},
-            {height: 50, offset: 1},
+            new Map<string, string|number>([['height', 0], ['offset', 0]]),
+            new Map<string, string|number>([['height', 100], ['offset', .5]]),
+            new Map<string, string|number>([['height', 50], ['offset', 1]]),
           ]);
 
           const player1 = players[2];
           expect(player1.delay).toEqual(3000);
           expect(player1.keyframes).toEqual([
-            {opacity: 1, height: 50, offset: 0}, {opacity: 0, height: 0, offset: 1}
+            new Map<string, string|number>([['opacity', 1], ['height', 50], ['offset', 0]]),
+            new Map<string, string|number>([['opacity', 0], ['height', 0], ['offset', 1]])
           ]);
         });
 
@@ -585,7 +611,8 @@ function createDiv() {
              const players = invokeAnimationSequence(rootElement, steps);
              const finalPlayer = players[players.length - 1];
              expect(finalPlayer.keyframes).toEqual([
-               {opacity: 1, color: 'blue', offset: 0}, {opacity: 0, color: 'green', offset: 1}
+               new Map<string, string|number>([['opacity', 1], ['color', 'blue'], ['offset', 0]]),
+               new Map<string, string|number>([['opacity', 0], ['color', 'green'], ['offset', 1]])
              ]);
            });
 
@@ -603,12 +630,15 @@ function createDiv() {
 
              const topPlayer = players[0];
              expect(topPlayer.keyframes).toEqual([
-               {opacity: AUTO_STYLE, offset: 0}, {opacity: .5, offset: 1}
+               new Map<string, string|number>([['opacity', AUTO_STYLE], ['offset', 0]]),
+               new Map<string, string|number>([['opacity', .5], ['offset', 1]])
              ]);
 
              const subPlayer = players[1];
              expect(subPlayer.keyframes).toEqual([
-               {opacity: .5, offset: 0}, {opacity: .8, offset: 0.5}, {opacity: 1, offset: 1}
+               new Map<string, string|number>([['opacity', .5], ['offset', 0]]),
+               new Map<string, string|number>([['opacity', .8], ['offset', 0.5]]),
+               new Map<string, string|number>([['opacity', 1], ['offset', 1]])
              ]);
            });
 
@@ -656,32 +686,32 @@ function createDiv() {
              expect(players.length).toEqual(5);
 
              const firstPlayerKeyframes = players[0].keyframes;
-             expect(firstPlayerKeyframes[0]['width']).toBeFalsy();
-             expect(firstPlayerKeyframes[1]['width']).toBeFalsy();
-             expect(firstPlayerKeyframes[0]['height']).toEqual(AUTO_STYLE);
-             expect(firstPlayerKeyframes[1]['height']).toEqual('50px');
+             expect(firstPlayerKeyframes[0].get('width')).toBeFalsy();
+             expect(firstPlayerKeyframes[1].get('width')).toBeFalsy();
+             expect(firstPlayerKeyframes[0].get('height')).toEqual(AUTO_STYLE);
+             expect(firstPlayerKeyframes[1].get('height')).toEqual('50px');
 
              const keyframePlayerKeyframes = players[1].keyframes;
-             expect(keyframePlayerKeyframes[0]['width']).toBeFalsy();
-             expect(keyframePlayerKeyframes[0]['height']).toBeFalsy();
+             expect(keyframePlayerKeyframes[0].get('width')).toBeFalsy();
+             expect(keyframePlayerKeyframes[0].get('height')).toBeFalsy();
 
              const groupPlayerKeyframes = players[2].keyframes;
-             expect(groupPlayerKeyframes[0]['width']).toEqual(AUTO_STYLE);
-             expect(groupPlayerKeyframes[1]['width']).toEqual('200px');
-             expect(groupPlayerKeyframes[0]['height']).toBeFalsy();
-             expect(groupPlayerKeyframes[1]['height']).toBeFalsy();
+             expect(groupPlayerKeyframes[0].get('width')).toEqual(AUTO_STYLE);
+             expect(groupPlayerKeyframes[1].get('width')).toEqual('200px');
+             expect(groupPlayerKeyframes[0].get('height')).toBeFalsy();
+             expect(groupPlayerKeyframes[1].get('height')).toBeFalsy();
 
              const secondToFinalAnimatePlayerKeyframes = players[3].keyframes;
-             expect(secondToFinalAnimatePlayerKeyframes[0]['width']).toBeFalsy();
-             expect(secondToFinalAnimatePlayerKeyframes[1]['width']).toBeFalsy();
-             expect(secondToFinalAnimatePlayerKeyframes[0]['height']).toEqual('50px');
-             expect(secondToFinalAnimatePlayerKeyframes[1]['height']).toEqual('300px');
+             expect(secondToFinalAnimatePlayerKeyframes[0].get('width')).toBeFalsy();
+             expect(secondToFinalAnimatePlayerKeyframes[1].get('width')).toBeFalsy();
+             expect(secondToFinalAnimatePlayerKeyframes[0].get('height')).toEqual('50px');
+             expect(secondToFinalAnimatePlayerKeyframes[1].get('height')).toEqual('300px');
 
              const finalAnimatePlayerKeyframes = players[4].keyframes;
-             expect(finalAnimatePlayerKeyframes[0]['width']).toEqual('200px');
-             expect(finalAnimatePlayerKeyframes[1]['width']).toEqual('500px');
-             expect(finalAnimatePlayerKeyframes[0]['height']).toEqual('300px');
-             expect(finalAnimatePlayerKeyframes[1]['height']).toEqual('500px');
+             expect(finalAnimatePlayerKeyframes[0].get('width')).toEqual('200px');
+             expect(finalAnimatePlayerKeyframes[1].get('width')).toEqual('500px');
+             expect(finalAnimatePlayerKeyframes[0].get('height')).toEqual('300px');
+             expect(finalAnimatePlayerKeyframes[1].get('height')).toEqual('500px');
            });
 
         it('should respect offsets if provided directly within the style data', () => {
@@ -695,7 +725,9 @@ function createDiv() {
           const player = players[0];
 
           expect(player.keyframes).toEqual([
-            {opacity: 0, offset: 0}, {opacity: .6, offset: .6}, {opacity: 1, offset: 1}
+            new Map<string, string|number>([['opacity', 0], ['offset', 0]]),
+            new Map<string, string|number>([['opacity', .6], ['offset', .6]]),
+            new Map<string, string|number>([['opacity', 1], ['offset', 1]]),
           ]);
         });
 
@@ -712,7 +744,9 @@ function createDiv() {
           const player = players[0];
 
           expect(player.keyframes).toEqual([
-            {opacity: 0, offset: 0}, {opacity: .4, offset: .4}, {opacity: 1, offset: 1}
+            new Map<string, string|number>([['opacity', 0], ['offset', 0]]),
+            new Map<string, string|number>([['opacity', .4], ['offset', .4]]),
+            new Map<string, string|number>([['opacity', 1], ['offset', 1]]),
           ]);
         });
       });
@@ -732,28 +766,33 @@ function createDiv() {
              const player0 = players[0];
              expect(player0.duration).toEqual(1000);
              expect(player0.keyframes).toEqual([
-               {width: 0, height: 0, offset: 0}, {width: 20, height: 50, offset: 1}
+               new Map<string, string|number>([['width', 0], ['height', 0], ['offset', 0]]),
+               new Map<string, string|number>([['width', 20], ['height', 50], ['offset', 1]])
              ]);
 
              const gPlayer1 = players[1];
              expect(gPlayer1.duration).toEqual(2000);
              expect(gPlayer1.delay).toEqual(1000);
              expect(gPlayer1.keyframes).toEqual([
-               {width: 20, offset: 0}, {width: 20, offset: .5}, {width: 200, offset: 1}
+               new Map<string, string|number>([['width', 20], ['offset', 0]]),
+               new Map<string, string|number>([['width', 20], ['offset', .5]]),
+               new Map<string, string|number>([['width', 200], ['offset', 1]])
              ]);
 
              const gPlayer2 = players[2];
              expect(gPlayer2.duration).toEqual(1000);
              expect(gPlayer2.delay).toEqual(1000);
              expect(gPlayer2.keyframes).toEqual([
-               {height: 50, offset: 0}, {height: 500, offset: 1}
+               new Map<string, string|number>([['height', 50], ['offset', 0]]),
+               new Map<string, string|number>([['height', 500], ['offset', 1]])
              ]);
 
              const player1 = players[3];
              expect(player1.duration).toEqual(1000);
              expect(player1.delay).toEqual(3000);
              expect(player1.keyframes).toEqual([
-               {width: 200, height: 500, offset: 0}, {width: 1000, height: 1000, offset: 1}
+               new Map<string, string|number>([['width', 200], ['height', 500], ['offset', 0]]),
+               new Map<string, string|number>([['width', 1000], ['height', 1000], ['offset', 1]])
              ]);
            });
 
@@ -775,13 +814,16 @@ function createDiv() {
           const gPlayer1 = players[0];
           expect(gPlayer1.delay).toEqual(0);
           expect(gPlayer1.keyframes).toEqual([
-            {opacity: 0, offset: 0},
-            {opacity: 1, offset: 1},
+            new Map<string, string|number>([['opacity', 0], ['offset', 0]]),
+            new Map<string, string|number>([['opacity', 1], ['offset', 1]]),
           ]);
 
           const gPlayer2 = players[1];
           expect(gPlayer1.delay).toEqual(0);
-          expect(gPlayer2.keyframes).toEqual([{width: 0, offset: 0}, {width: 200, offset: 1}]);
+          expect(gPlayer2.keyframes).toEqual([
+            new Map<string, string|number>([['width', 0], ['offset', 0]]),
+            new Map<string, string|number>([['width', 200], ['offset', 1]])
+          ]);
         });
 
         it('should respect delays after group entries', () => {
@@ -800,9 +842,9 @@ function createDiv() {
           expect(finalPlayer.delay).toEqual(2000);
           expect(finalPlayer.duration).toEqual(2000);
           expect(finalPlayer.keyframes).toEqual([
-            {width: 100, height: 100, offset: 0},
-            {width: 100, height: 100, offset: .5},
-            {width: 200, height: 200, offset: 1},
+            new Map<string, string|number>([['width', 100], ['height', 100], ['offset', 0]]),
+            new Map<string, string|number>([['width', 100], ['height', 100], ['offset', .5]]),
+            new Map<string, string|number>([['width', 200], ['height', 200], ['offset', 1]]),
           ]);
         });
 
@@ -842,14 +884,14 @@ function createDiv() {
 
           expect(finalWidthPlayer.delay).toEqual(1800);
           expect(finalWidthPlayer.keyframes).toEqual([
-            {width: '100px', offset: 0},
-            {width: '200px', offset: 1},
+            new Map<string, string|number>([['width', '100px'], ['offset', 0]]),
+            new Map<string, string|number>([['width', '200px'], ['offset', 1]]),
           ]);
 
           expect(finalHeightPlayer.delay).toEqual(1800);
           expect(finalHeightPlayer.keyframes).toEqual([
-            {height: '100px', offset: 0},
-            {height: '200px', offset: 1},
+            new Map<string, string|number>([['height', '100px'], ['offset', 0]]),
+            new Map<string, string|number>([['height', '200px'], ['offset', 1]]),
           ]);
         });
       });
@@ -876,7 +918,9 @@ function createDiv() {
           const steps =
               [query('somethingFake', [style({opacity: 0}), animate(1000, style({opacity: 1}))])];
 
-          expect(() => { invokeAnimationSequence(rootElement, steps); })
+          expect(() => {
+            invokeAnimationSequence(rootElement, steps);
+          })
               .toThrowError(
                   /`query\("somethingFake"\)` returned zero elements\. \(Use `query\("somethingFake", \{ optional: true \}\)` if you wish to allow this\.\)/);
         });
@@ -887,13 +931,17 @@ function createDiv() {
                  'somethingFake', [style({opacity: 0}), animate(1000, style({opacity: 1}))],
                  {optional: true})];
 
-             expect(() => { invokeAnimationSequence(rootElement, steps); }).not.toThrow();
+             expect(() => {
+               invokeAnimationSequence(rootElement, steps);
+             }).not.toThrow();
 
              const steps2 = [query(
                  'fakeSomethings', [style({opacity: 0}), animate(1000, style({opacity: 1}))],
                  {optional: true})];
 
-             expect(() => { invokeAnimationSequence(rootElement, steps2); }).not.toThrow();
+             expect(() => {
+               invokeAnimationSequence(rootElement, steps2);
+             }).not.toThrow();
            });
 
         it('should delay the query operation if a delay option is provided', () => {
@@ -924,8 +972,10 @@ function createDiv() {
 
              const player = invokeAnimationSequence(rootElement, steps)[0];
              expect(player.keyframes).toEqual([
-               {opacity: 0, offset: 0}, {opacity: 0, offset: .25, easing: 'ease-out'},
-               {opacity: 1, offset: 1}
+               new Map<string, string|number>([['opacity', 0], ['offset', 0]]),
+               new Map<string, string|number>(
+                   [['opacity', 0], ['offset', .25], ['easing', 'ease-out']]),
+               new Map<string, string|number>([['opacity', 1], ['offset', 1]])
              ]);
            });
 
@@ -940,8 +990,11 @@ function createDiv() {
 
           const player = players[0];
           expect(player.keyframes).toEqual([
-            {width: 0, offset: 0, easing: 'linear'}, {width: 10, offset: .25, easing: 'ease-out'},
-            {width: 20, offset: .75, easing: 'ease-in'}, {width: 30, offset: 1}
+            new Map<string, string|number>([['width', 0], ['offset', 0], ['easing', 'linear']]),
+            new Map<string, string|number>(
+                [['width', 10], ['offset', .25], ['easing', 'ease-out']]),
+            new Map<string, string|number>([['width', 20], ['offset', .75], ['easing', 'ease-in']]),
+            new Map<string, string|number>([['width', 30], ['offset', 1]])
           ]);
         });
 
@@ -991,9 +1044,11 @@ function createDiv() {
         it('should create an empty animation if there are zero animation steps', () => {
           const steps: AnimationMetadata[] = [];
 
-          const fromStyles: ɵStyleData[] = [{background: 'blue', height: 100}];
+          const fromStyles: Array<ɵStyleDataMap> =
+              [new Map<string, string|number>([['background', 'blue'], ['height', 100]])];
 
-          const toStyles: ɵStyleData[] = [{background: 'red'}];
+          const toStyles: Array<ɵStyleDataMap> =
+              [new Map<string, string|number>([['background', 'red']])];
 
           const player = invokeAnimationSequence(rootElement, steps, {}, fromStyles, toStyles)[0];
           expect(player.duration).toEqual(0);
@@ -1004,14 +1059,18 @@ function createDiv() {
            () => {
              const steps: AnimationMetadata[] = [animate(1000)];
 
-             const fromStyles: ɵStyleData[] = [{background: 'blue', height: 100}];
+             const fromStyles: Array<ɵStyleDataMap> =
+                 [new Map<string, string|number>([['background', 'blue'], ['height', 100]])];
 
-             const toStyles: ɵStyleData[] = [{background: 'red'}];
+             const toStyles: Array<ɵStyleDataMap> =
+                 [new Map<string, string|number>([['background', 'red']])];
 
              const players = invokeAnimationSequence(rootElement, steps, {}, fromStyles, toStyles);
              expect(players[0].keyframes).toEqual([
-               {background: 'blue', height: 100, offset: 0},
-               {background: 'red', height: AUTO_STYLE, offset: 1}
+               new Map<string, string|number>(
+                   [['background', 'blue'], ['height', 100], ['offset', 0]]),
+               new Map<string, string|number>(
+                   [['background', 'red'], ['height', AUTO_STYLE], ['offset', 1]])
              ]);
            });
 
@@ -1019,14 +1078,17 @@ function createDiv() {
            () => {
              const steps: AnimationMetadata[] = [animate('1s ease-out')];
 
-             const fromStyles: ɵStyleData[] = [{background: 'blue'}];
+             const fromStyles: Array<ɵStyleDataMap> =
+                 [new Map<string, string|number>([['background', 'blue']])];
 
-             const toStyles: ɵStyleData[] = [{background: 'red'}];
+             const toStyles: Array<ɵStyleDataMap> =
+                 [new Map<string, string|number>([['background', 'red']])];
 
              const players = invokeAnimationSequence(rootElement, steps, {}, fromStyles, toStyles);
              expect(players[0].keyframes).toEqual([
-               {background: 'blue', offset: 0, easing: 'ease-out'},
-               {background: 'red', offset: 1}
+               new Map<string, string|number>(
+                   [['background', 'blue'], ['offset', 0], ['easing', 'ease-out']]),
+               new Map<string, string|number>([['background', 'red'], ['offset', 1]])
              ]);
            });
       });
@@ -1034,25 +1096,26 @@ function createDiv() {
   });
 }
 
-function humanizeOffsets(keyframes: ɵStyleData[], digits: number = 3): ɵStyleData[] {
+function humanizeOffsets(
+    keyframes: Array<ɵStyleDataMap>, digits: number = 3): Array<ɵStyleDataMap> {
   return keyframes.map(keyframe => {
-    keyframe['offset'] = Number(parseFloat(<any>keyframe['offset']).toFixed(digits));
+    keyframe.set('offset', Number(parseFloat(<any>keyframe.get('offset')).toFixed(digits)));
     return keyframe;
   });
 }
 
 function invokeAnimationSequence(
-    element: any, steps: AnimationMetadata | AnimationMetadata[], locals: {[key: string]: any} = {},
-    startingStyles: ɵStyleData[] = [], destinationStyles: ɵStyleData[] = [],
+    element: any, steps: AnimationMetadata|AnimationMetadata[], locals: {[key: string]: any} = {},
+    startingStyles: Array<ɵStyleDataMap> = [], destinationStyles: Array<ɵStyleDataMap> = [],
     subInstructions?: ElementInstructionMap): AnimationTimelineInstruction[] {
   const driver = new MockAnimationDriver();
   return new Animation(driver, steps)
       .buildTimelines(element, startingStyles, destinationStyles, locals, subInstructions);
 }
 
-function validateAndThrowAnimationSequence(steps: AnimationMetadata | AnimationMetadata[]) {
+function validateAndThrowAnimationSequence(steps: AnimationMetadata|AnimationMetadata[]) {
   const driver = new MockAnimationDriver();
-  const errors: any[] = [];
+  const errors: string[] = [];
   const ast = buildAnimationAst(driver, steps, errors);
   if (errors.length) {
     throw new Error(errors.join('\n'));

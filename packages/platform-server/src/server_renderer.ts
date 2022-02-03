@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright Google Inc. All Rights Reserved.
+ * Copyright Google LLC All Rights Reserved.
  *
  * Use of this source code is governed by an MIT-style license that can be
  * found in the LICENSE file at https://angular.io/license
@@ -9,7 +9,7 @@
 import {DOCUMENT, ɵgetDOM as getDOM} from '@angular/common';
 import {DomElementSchemaRegistry} from '@angular/compiler';
 import {Inject, Injectable, NgZone, Renderer2, RendererFactory2, RendererStyleFlags2, RendererType2, ViewEncapsulation} from '@angular/core';
-import {EventManager, ɵNAMESPACE_URIS as NAMESPACE_URIS, ɵSharedStylesHost as SharedStylesHost, ɵflattenStyles as flattenStyles, ɵshimContentAttribute as shimContentAttribute, ɵshimHostAttribute as shimHostAttribute} from '@angular/platform-browser';
+import {EventManager, ɵflattenStyles as flattenStyles, ɵNAMESPACE_URIS as NAMESPACE_URIS, ɵSharedStylesHost as SharedStylesHost, ɵshimContentAttribute as shimContentAttribute, ɵshimHostAttribute as shimHostAttribute} from '@angular/platform-browser';
 
 const EMPTY_ARRAY: any[] = [];
 
@@ -32,7 +32,6 @@ export class ServerRendererFactory2 implements RendererFactory2 {
       return this.defaultRenderer;
     }
     switch (type.encapsulation) {
-      case ViewEncapsulation.Native:
       case ViewEncapsulation.Emulated: {
         let renderer = this.rendererByCompId.get(type.id);
         if (!renderer) {
@@ -68,7 +67,7 @@ class DefaultServerRenderer2 implements Renderer2 {
 
   destroy(): void {}
 
-  destroyNode: null;
+  destroyNode = null;
 
   createElement(name: string, namespace?: string, debugInfo?: any): any {
     if (namespace) {
@@ -88,7 +87,9 @@ class DefaultServerRenderer2 implements Renderer2 {
     return doc.createTextNode(value);
   }
 
-  appendChild(parent: any, newChild: any): void { parent.appendChild(newChild); }
+  appendChild(parent: any, newChild: any): void {
+    parent.appendChild(newChild);
+  }
 
   insertBefore(parent: any, newChild: any, refChild: any): void {
     if (parent) {
@@ -118,9 +119,13 @@ class DefaultServerRenderer2 implements Renderer2 {
     return el;
   }
 
-  parentNode(node: any): any { return node.parentNode; }
+  parentNode(node: any): any {
+    return node.parentNode;
+  }
 
-  nextSibling(node: any): any { return node.nextSibling; }
+  nextSibling(node: any): any {
+    return node.nextSibling;
+  }
 
   setAttribute(el: any, name: string, value: string, namespace?: string): void {
     if (namespace) {
@@ -138,14 +143,21 @@ class DefaultServerRenderer2 implements Renderer2 {
     }
   }
 
-  addClass(el: any, name: string): void { el.classList.add(name); }
+  addClass(el: any, name: string): void {
+    el.classList.add(name);
+  }
 
-  removeClass(el: any, name: string): void { el.classList.remove(name); }
+  removeClass(el: any, name: string): void {
+    el.classList.remove(name);
+  }
 
   setStyle(el: any, style: string, value: any, flags: RendererStyleFlags2): void {
     style = style.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase();
     const styleMap = _readStyleAttribute(el);
-    styleMap[style] = value || '';
+    if (flags & RendererStyleFlags2.Important) {
+      value += ' !important';
+    }
+    styleMap[style] = value == null ? '' : value;
     _writeStyleAttribute(el, styleMap);
   }
 
@@ -183,7 +195,9 @@ class DefaultServerRenderer2 implements Renderer2 {
     }
   }
 
-  setValue(node: any, value: string): void { node.textContent = value; }
+  setValue(node: any, value: string): void {
+    node.textContent = value;
+  }
 
   listen(
       target: 'document'|'window'|'body'|any, eventName: string,
@@ -194,7 +208,7 @@ class DefaultServerRenderer2 implements Renderer2 {
           target, eventName, this.decoratePreventDefault(callback));
     }
     return <() => void>this.eventManager.addEventListener(
-               target, eventName, this.decoratePreventDefault(callback)) as() => void;
+               target, eventName, this.decoratePreventDefault(callback)) as () => void;
   }
 
   private decoratePreventDefault(eventHandler: Function): Function {
@@ -221,8 +235,10 @@ class DefaultServerRenderer2 implements Renderer2 {
 const AT_CHARCODE = '@'.charCodeAt(0);
 function checkNoSyntheticProp(name: string, nameKind: string) {
   if (name.charCodeAt(0) === AT_CHARCODE) {
-    throw new Error(
-        `Found the synthetic ${nameKind} ${name}. Please include either "BrowserAnimationsModule" or "NoopAnimationsModule" in your application.`);
+    throw new Error(`Unexpected synthetic ${nameKind} ${name} found. Please make sure that:
+  - Either \`BrowserAnimationsModule\` or \`NoopAnimationsModule\` are imported in your application.
+  - There is corresponding configuration for the animation named \`${
+        name}\` defined in the \`animations\` field of the \`@Component\` decorator (see https://angular.io/api/core/Component#animations).`);
   }
 }
 
@@ -243,9 +259,11 @@ class EmulatedEncapsulationServerRenderer2 extends DefaultServerRenderer2 {
     this.hostAttr = shimHostAttribute(componentId);
   }
 
-  applyToHost(element: any) { super.setAttribute(element, this.hostAttr, ''); }
+  applyToHost(element: any) {
+    super.setAttribute(element, this.hostAttr, '');
+  }
 
-  createElement(parent: any, name: string): Element {
+  override createElement(parent: any, name: string): Element {
     const el = super.createElement(parent, name, this.document);
     super.setAttribute(el, this.contentAttr, '');
     return el;
@@ -276,7 +294,7 @@ function _writeStyleAttribute(element: any, styleMap: {[name: string]: string}) 
   let styleAttrValue = '';
   for (const key in styleMap) {
     const newValue = styleMap[key];
-    if (newValue) {
+    if (newValue != null) {
       styleAttrValue += key + ':' + styleMap[key] + ';';
     }
   }

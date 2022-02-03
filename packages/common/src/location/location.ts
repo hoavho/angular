@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright Google Inc. All Rights Reserved.
+ * Copyright Google LLC All Rights Reserved.
  *
  * Use of this source code is governed by an MIT-style license that can be
  * found in the LICENSE file at https://angular.io/license
@@ -30,7 +30,7 @@ export interface PopStateEvent {
  *
  * @usageNotes
  *
- * It's better to use the `Router#navigate` service to trigger route changes. Use
+ * It's better to use the `Router.navigate()` service to trigger route changes. Use
  * `Location` only if you need to interact with or create normalized URLs outside of
  * routing.
  *
@@ -64,6 +64,8 @@ export class Location {
   _platformLocation: PlatformLocation;
   /** @internal */
   _urlChangeListeners: ((url: string, state: unknown) => void)[] = [];
+  /** @internal */
+  _urlChangeSubscription?: SubscriptionLike;
 
   constructor(platformStrategy: LocationStrategy, platformLocation: PlatformLocation) {
     this._platformStrategy = platformStrategy;
@@ -97,7 +99,9 @@ export class Location {
    * Reports the current state of the location history.
    * @returns The current value of the `history.state` object.
    */
-  getState(): unknown { return this._platformLocation.getState(); }
+  getState(): unknown {
+    return this._platformLocation.getState();
+  }
 
   /**
    * Normalizes the given path and compares to the current normalized path.
@@ -173,12 +177,32 @@ export class Location {
   /**
    * Navigates forward in the platform's history.
    */
-  forward(): void { this._platformStrategy.forward(); }
+  forward(): void {
+    this._platformStrategy.forward();
+  }
 
   /**
    * Navigates back in the platform's history.
    */
-  back(): void { this._platformStrategy.back(); }
+  back(): void {
+    this._platformStrategy.back();
+  }
+
+  /**
+   * Navigate to a specific page from session history, identified by its relative position to the
+   * current page.
+   *
+   * @param relativePosition  Position of the target page in the history relative to the current
+   *     page.
+   * A negative value moves backwards, a positive value moves forwards, e.g. `location.historyGo(2)`
+   * moves forward two pages and `location.historyGo(-2)` moves back two pages. When we try to go
+   * beyond what's stored in the history session, we stay in the current page. Same behaviour occurs
+   * when `relativePosition` equals 0.
+   * @see https://developer.mozilla.org/en-US/docs/Web/API/History_API#Moving_to_a_specific_point_in_history
+   */
+  historyGo(relativePosition: number = 0): void {
+    this._platformStrategy.historyGo?.(relativePosition);
+  }
 
   /**
    * Registers a URL change listener. Use to catch updates performed by the Angular
@@ -188,7 +212,12 @@ export class Location {
    */
   onUrlChange(fn: (url: string, state: unknown) => void) {
     this._urlChangeListeners.push(fn);
-    this.subscribe(v => { this._notifyUrlChangeListeners(v.url, v.state); });
+
+    if (!this._urlChangeSubscription) {
+      this._urlChangeSubscription = this.subscribe(v => {
+        this._notifyUrlChangeListeners(v.url, v.state);
+      });
+    }
   }
 
   /** @internal */
@@ -199,8 +228,13 @@ export class Location {
   /**
    * Subscribes to the platform's `popState` events.
    *
+   * Note: `Location.go()` does not trigger the `popState` event in the browser. Use
+   * `Location.onUrlChange()` to subscribe to URL changes instead.
+   *
    * @param value Event that is triggered when the state history changes.
    * @param exception The exception to throw.
+   *
+   * @see [onpopstate](https://developer.mozilla.org/en-US/docs/Web/API/WindowEventHandlers/onpopstate)
    *
    * @returns Subscribed events.
    */
